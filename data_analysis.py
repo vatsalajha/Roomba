@@ -1,19 +1,12 @@
-# import matplotlib.pyplot as plt
-# import seaborn as sns
-
-# sns.lineplot(data=data, x="K", y="Success", hue="Bot")
-# plt.title("Success Rate vs. Number of Aliens")
-# plt.xlabel("Number of Aliens (K)")
-# plt.ylabel("Success Rate")
-# plt.show()
-
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from functools import partial
+from simulation_engine import run_simulation
 from bot1 import bot1_move
 from bot2 import bot2_move
 from bot3 import bot3_move
-# from bot4 import bot4_move  # Assume this exists
+from bot4 import bot4_move  # Assume this exists
 
 # Assuming run_simulation is a function that simulates the game 
 # and returns a tuple (success: bool, steps: int)

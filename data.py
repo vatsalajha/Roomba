@@ -5,7 +5,7 @@ from functools import partial
 from bot1 import bot1_move
 from bot2 import bot2_move
 from bot3 import bot3_move
-# from bot4 import bot4_move  # Assume this exists
+from bot4 import bot4_move  # Assume this exists
 
 # Modify run_simulation to return both outcome and steps
 # Assume it's done

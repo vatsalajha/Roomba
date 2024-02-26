@@ -14,3 +14,6 @@ if __name__ == "__main__":
     # Setup simulation context here
     next_move = bot2_move(bot_position, captain_position, alien_positions, ship_layout)
     print(f"Bot 2 moves to: {next_move}")
+
+
+#  

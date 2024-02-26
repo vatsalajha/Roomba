@@ -3,6 +3,7 @@
 
 import numpy as np
 import random
+import matplotlib.pyplot as plt
 from queue import PriorityQueue
 from ship_layout import generate_ship_layout
 
@@ -73,6 +74,30 @@ def bot1_move(bot_position, captain_position, ship_layout):
         next_step = bot_position  # Stay in place if no path is found
     return next_step
 
+# Add this function to bot1.py if not importing from ship_layout.py
+def visualize_layout(layout, bot_position=None, captain_position=None, alien_positions=[]):
+    fig, ax = plt.subplots()
+    ax.imshow(layout, cmap='Greys', interpolation='nearest')
+
+    if bot_position:
+        ax.plot(bot_position[1], bot_position[0], 'bo')  # Bot in blue
+    if captain_position:
+        ax.plot(captain_position[1], captain_position[0], 'go')  # Captain in green
+    for alien in alien_positions:
+        ax.plot(alien[1], alien[0], 'ro')  # Aliens in red
+
+    plt.xticks([]), plt.yticks([])  # Hide axis ticks
+    plt.show()
+
+def place_aliens(D, grid, count, exclude_positions):
+    aliens = []
+    while len(aliens) < count:
+        position = random_position(D, grid)
+        if position not in exclude_positions:
+            aliens.append(position)
+            grid[position] = 2  # Assuming '2' marks an alien, adjust as needed
+    return aliens
+
 # Example usage placeholder (Actual logic to integrate with the simulation will be needed)
 if __name__ == "__main__":
     # D = 10 # yaha, I need to get this value from ship_layout (hardcoded for now)
@@ -81,7 +106,12 @@ if __name__ == "__main__":
     print(ship_layout.shape)
     print(ship_layout)
     bot_position = random_position(D, ship_layout)
-    captain_position = random_position(D, ship_layout) 
+    captain_position = random_position(D, ship_layout)
+
+    alien_count = 5  # Hardcoded for now
+    exclude_positions = [bot_position, captain_position]
+    aliens = place_aliens(D, ship_layout, alien_count, exclude_positions)
+
     while captain_position == bot_position:  # Ensure bot and captain are not in the same position
         captain_position = random_position(D, ship_layout)
 
@@ -92,3 +122,5 @@ if __name__ == "__main__":
     next_move = bot1_move(bot_position, captain_position, ship_layout)
     print(f"Bot starts at: {bot_position}, Captain at: {captain_position}")
     print(f"Bot 1 moves to: {next_move}")
+    # visualize_layout(ship_layout, bot_position, captain_position)
+    visualize_layout(ship_layout, bot_position, captain_position, aliens)

@@ -1,9 +1,11 @@
 import numpy as np
 import random
-from ship_layout import generate_ship_layout  # Assume this is your ship layout generator
+from ship_layout import generate_ship_layout 
 # Import bots' move functions
 from bot1 import bot1_move
-# For simplicity, we'll only include bot1 in this example. Extend as needed.
+from bot2 import bot2_move
+from bot3 import bot3_move
+from bot4 import bot4_move
 
 def place_entities(ship_layout):
     open_cells = np.argwhere(ship_layout == 1)

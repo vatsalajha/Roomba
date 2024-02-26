@@ -14,7 +14,7 @@ def open_initial_cell(layout):
     # Choose a random cell (excluding the border to ensure it's an interior cell)
     x, y = random.randint(1, D-2), random.randint(1, D-2)
     layout[x, y] = 1  # Mark the cell as open
-    print(x, y)
+    print(f"Open Cell: {x, y}")
 
 def get_neighbors(x, y, D):
     # Return a list of neighbor coordinates (up, down, left, right)
@@ -75,9 +75,9 @@ def generate_ship_layout(D, dead_end_opening_fraction=0.5):
     return layout
 
 # Example usage
-D = 10  # Dimension of the grid
+# D = 5  # Dimension of the grid
 dead_end_opening_fraction = 0.5
-ship_layout = generate_ship_layout(D, dead_end_opening_fraction)
+# ship_layout = generate_ship_layout(D, dead_end_opening_fraction)
 
-print(ship_layout)
-visualize_layout(ship_layout)
+# print(ship_layout)
+# visualize_layout(ship_layout)

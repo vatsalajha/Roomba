@@ -3,6 +3,7 @@
 
 import numpy as np
 import random
+import matplotlib.pyplot as plt
 from queue import PriorityQueue
 from ship_layout import generate_ship_layout
 import matplotlib.pyplot as plt
@@ -64,68 +65,39 @@ def get_neighbors(position, grid):
     return neighbors
 
 # Uses A* Algorithm to find shortest path to the captain
-def bot1_move(bot_position, captain_position, ship_layout, alien_positions):
-    # if not hasattr(bot1_move, "cached_path"):
-    #     # Calculate the path with aliens considered only once
-    #     bot1_move.cached_path = find_shortest_path(bot_position, captain_position, ship_layout, alien_positions)
-    #     print("Path to be followed by bot", bot1_move.cached_path)
+def bot1_move(bot_position, captain_position, ship_layout):
+    path = find_shortest_path(bot_position, captain_position, ship_layout)
+    # Move to the next cell in the path if it exists
+    print(path)
+    if path and len(path) > 1:
+        next_step = path[0]
+    else:
+        next_step = bot_position  # Stay in place if no path is found
+    return next_step
 
-    # return bot1_move.cached_path
-    #Consider aliens positiobs
-    if not hasattr(bot1_move, "cached_path") or not bot1_move.cached_path:
-        # Check for aliens' positions
-        if alien_positions:
-            # Calculate the path with aliens considered only once
-            bot1_move.cached_path = find_shortest_path(bot_position, captain_position, ship_layout, alien_positions)
-            print("Path to be followed by bot", bot1_move.cached_path)
-        else:
-            # Calculate the path without considering aliens
-            bot1_move.cached_path = find_shortest_path(bot_position, captain_position, ship_layout)
+# Add this function to bot1.py if not importing from ship_layout.py
+def visualize_layout(layout, bot_position=None, captain_position=None, alien_positions=[]):
+    fig, ax = plt.subplots()
+    ax.imshow(layout, cmap='binary', interpolation='nearest')
 
-    
-        # Move to the next cell in the cached path if it exists
-        # if bot1_move.cached_path and len(bot1_move.cached_path) > 1:
-        #     next_step = bot1_move.cached_path.pop(0)
-        # else:
-        #     next_step = bot_position  # Stay in place if no path is found
-        # return [next_step]
-    return bot1_move.cached_path
+    if bot_position:
+        ax.plot(bot_position[1], bot_position[0], 'bo')  # Bot in blue
+    if captain_position:
+        ax.plot(captain_position[1], captain_position[0], 'go')  # Captain in green
+    for alien in alien_positions:
+        ax.plot(alien[1], alien[0], 'ro')  # Aliens in red
 
-def print_layout(layout, bot_position, captain_position, alien_positions, path):
-    D = layout.shape[0]
-    colors = {'0': 'black', '1': 'lightgrey', 'B': 'blue', 'A': 'red', 'C': 'green', 'P': 'orange'}
-
-    # Create a plot
-    plt.figure(figsize=(8, 8))
-
-    # Plot each cell with the corresponding color
-    for i in range(D):
-        for j in range(D):
-            color = colors[str(layout[i, j])]  # Convert numerical value to string for dictionary lookup
-            #plt.scatter(j, D - i - 1, color=color, s=100, marker='s')  # Reversing the y-axis to match matrix indexing
-            plt.fill([j, j+1, j+1, j], [D - i - 1, D - i - 1, D - i, D - i], color=color, edgecolor='black')  # Reversing the y-axis to match matrix indexing
-            
-    # Mark bot, captain, and aliens with their symbols
-    plt.text(bot_position[1] + 0.5, D - bot_position[0] - 0.5, 'B', fontsize=12, color='blue', ha='center', va='center')
-    plt.text(captain_position[1] + 0.5, D - captain_position[0] - 0.5, 'C', fontsize=12, color='green', ha='center', va='center')
-    for alien_pos in alien_positions:
-        plt.text(alien_pos[1] + 0.5, D - alien_pos[0] - 0.5, 'A', fontsize=12, color='red', ha='center', va='center')
-
-    # Plot the entire path as 'P'
-    for cell in path:
-        plt.text(cell[1] + 0.5, D - cell[0] - 0.5, 'P', fontsize=12, color='orange', ha='center', va='center')
-        
-    # Customize plot appearance
-    plt.xlim(0, D)
-    plt.ylim(0, D)
-    plt.gca().set_aspect('equal', adjustable='box')
-    plt.gca().invert_yaxis()  # Invert y-axis to match matrix indexing
-    plt.xticks([])
-    plt.yticks([])
-    plt.grid(True, color='black', linewidth=2)
-
-    # Show the plot
+    plt.xticks([]), plt.yticks([])  # Hide axis ticks
     plt.show()
+
+def place_aliens(D, grid, count, exclude_positions):
+    aliens = []
+    while len(aliens) < count:
+        position = random_position(D, grid)
+        if position not in exclude_positions:
+            aliens.append(position)
+            grid[position] = 2  # Assuming '2' marks an alien, adjust as needed
+    return aliens
 
 # Example usage placeholder (Actual logic to integrate with the simulation will be needed)
 if __name__ == "__main__":
@@ -135,7 +107,12 @@ if __name__ == "__main__":
     print("Shape(size) of ship:", ship_layout.shape)
     print(ship_layout)
     bot_position = random_position(D, ship_layout)
-    captain_position = random_position(D, ship_layout) 
+    captain_position = random_position(D, ship_layout)
+
+    alien_count = 5  # Hardcoded for now
+    exclude_positions = [bot_position, captain_position]
+    aliens = place_aliens(D, ship_layout, alien_count, exclude_positions)
+
     while captain_position == bot_position:  # Ensure bot and captain are not in the same position
         captain_position = random_position(D, ship_layout)
 
@@ -158,6 +135,8 @@ if __name__ == "__main__":
     #ship_layout[5, :] = 0  # Example: Adding a row of blocked cells for complexity
     
     # while captain_position != bot_position:
-    # next_move = bot1_move(bot_position, captain_position, ship_layout, alien_positions)
-    # print(f"Bot starts at: {bot_position}, Captain at: {captain_position}")
-    # print(f"Bot 1 moves to: {next_move}")
+    next_move = bot1_move(bot_position, captain_position, ship_layout)
+    print(f"Bot starts at: {bot_position}, Captain at: {captain_position}")
+    print(f"Bot 1 moves to: {next_move}")
+    # visualize_layout(ship_layout, bot_position, captain_position)
+    visualize_layout(ship_layout, bot_position, captain_position, aliens)

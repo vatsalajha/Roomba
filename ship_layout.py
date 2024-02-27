@@ -14,7 +14,7 @@ def open_initial_cell(layout):
     # Choose a random cell (excluding the border to ensure it's an interior cell)
     x, y = random.randint(1, D-2), random.randint(1, D-2)
     layout[x, y] = 1  # Mark the cell as open
-    print(f"Open Cell: {x, y}")
+    print(f"First Open Cell: {x, y}")
 
 def get_neighbors(x, y, D):
     # Return a list of neighbor coordinates (up, down, left, right)

@@ -6,7 +6,6 @@ import random
 import matplotlib.pyplot as plt
 from queue import PriorityQueue
 from ship_layout import generate_ship_layout
-import matplotlib.pyplot as plt
 
 def heuristic(a, b):
     """Calculate the Manhattan distance between two points"""
@@ -21,7 +20,7 @@ def random_position(D, grid):
     #return random.randint(0, D-1), random.randint(0, D-1)
 
 # Find the shortest path from start to goal using A* pathfinding."""
-def find_shortest_path(start, goal, grid, alien_positions):
+def find_shortest_path(start, goal, grid):
     open_set = PriorityQueue()
     # Storing the nodes to be explored
     open_set.put((0, start))
@@ -39,7 +38,7 @@ def find_shortest_path(start, goal, grid, alien_positions):
                 path.append(current)
                 current = came_from[current]
             path.reverse()
-            return path[0:]  
+            return path[0:]  # Exclude the start position to get the next step
         for neighbor in get_neighbors(current, grid):
             tentative_g_score = g_score[current] + 1
             if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
@@ -102,9 +101,9 @@ def place_aliens(D, grid, count, exclude_positions):
 # Example usage placeholder (Actual logic to integrate with the simulation will be needed)
 if __name__ == "__main__":
     # D = 10 # yaha, I need to get this value from ship_layout (hardcoded for now)
-    D = random.randint(3, 50)
+    D = random.randint(1, 100)
     ship_layout = generate_ship_layout(D)
-    print("Shape(size) of ship:", ship_layout.shape)
+    print(ship_layout.shape)
     print(ship_layout)
     bot_position = random_position(D, ship_layout)
     captain_position = random_position(D, ship_layout)
@@ -116,21 +115,6 @@ if __name__ == "__main__":
     while captain_position == bot_position:  # Ensure bot and captain are not in the same position
         captain_position = random_position(D, ship_layout)
 
-    alien_positions = [(3, 3), (7, 7)]  # Example alien positions
-
-    path = bot1_move(bot_position, captain_position, ship_layout, alien_positions)
-    print(f"Bot starts at: {bot_position}, Captain at: {captain_position}")
-
-    for cell in path:
-        print_layout(ship_layout, bot_position, captain_position, alien_positions, [cell])  # Pass each cell as a single-element list
-        print(f"Bot moves to: {cell}")
-        bot_position = cell
-
-    # for cell in path:
-    #     print_layout(ship_layout, bot_position, captain_position, alien_positions, path)
-    #     print(f"Bot moves to: {cell}")
-    #     bot_position = cell
-    
     #ship_layout = np.ones((10, 10), dtype=int)  # Example: Open grid
     #ship_layout[5, :] = 0  # Example: Adding a row of blocked cells for complexity
     

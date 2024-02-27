@@ -77,7 +77,7 @@ def bot1_move(bot_position, captain_position, ship_layout):
 # Add this function to bot1.py if not importing from ship_layout.py
 def visualize_layout(layout, bot_position=None, captain_position=None, alien_positions=[]):
     fig, ax = plt.subplots()
-    ax.imshow(layout, cmap='Greys', interpolation='nearest')
+    ax.imshow(layout, cmap='binary', interpolation='nearest')
 
     if bot_position:
         ax.plot(bot_position[1], bot_position[0], 'bo')  # Bot in blue

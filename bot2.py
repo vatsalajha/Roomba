@@ -30,8 +30,10 @@ def get_neighbors(position, grid, alien_positions):
                 neighbors.append(neighbor)
     return neighbors
 
+# Find the shortest path from start to goal using A* pathfinding."""
 def find_shortest_path(start, goal, grid, alien_positions):
     open_set = PriorityQueue()
+    # Storing the nodes to be explored
     open_set.put((0, start))
     came_from = {start: None}
     # cost_so_far = {start: 0}
@@ -47,7 +49,7 @@ def find_shortest_path(start, goal, grid, alien_positions):
                 path.append(current)
                 current = came_from[current]
             path.reverse()
-            return path[0:]  # Return path excluding the start position
+            return path[0:]  # No excluding -- Return path excluding the start position
         
         for neighbor in get_neighbors(current, grid, alien_positions):
             tentative_g_score = g_score[current] + 1
@@ -59,7 +61,9 @@ def find_shortest_path(start, goal, grid, alien_positions):
                     open_set.put((f_score[neighbor], neighbor))
                     
     return []  # If no path found
+    # pass
 
+# Should we remove this now ????
 def reconstruct_path(came_from, start, goal):
     current = goal
     path = []
@@ -69,6 +73,19 @@ def reconstruct_path(came_from, start, goal):
     path.append(start)
     path.reverse()
     return path
+
+def move_aliens(alien_positions, grid):
+    new_alien_positions = []
+    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]  # Possible directions: right, down, left, up
+    for pos in alien_positions:
+        valid_moves = [((pos[0] + d[0], pos[1] + d[1])) for d in directions if 0 <= pos[0] + d[0] < grid.shape[0] and 0 <= pos[1] + d[1] < grid.shape[1] and grid[pos[0] + d[0], pos[1] + d[1]] == 1]
+        if valid_moves:
+            new_pos = random.choice(valid_moves)  # Choose a random valid move
+            new_alien_positions.append(new_pos)
+        else:
+            new_alien_positions.append(pos)  # Stay in place if no valid move
+    return new_alien_positions
+
 
 def bot2_move(bot_position, captain_position, alien_positions, ship_layout):
     path = find_shortest_path(bot_position, captain_position, ship_layout, alien_positions)
@@ -90,8 +107,9 @@ def place_aliens(D, grid, count, exclude_positions):
 
 def visualize_layout(layout, bot_position=None, captain_position=None, alien_positions=[]):
     fig, ax = plt.subplots()
+    inverted_layout = 1 - layout
     ax.imshow(layout, cmap='binary', interpolation='nearest')  # 'binary' for black and white
-
+    # 0 white (BLOCKED), 1 black (OPEN)
     if bot_position:
         ax.plot(bot_position[1], bot_position[0], 'bo', markersize=5)  # Bot in blue
     if captain_position:
@@ -105,7 +123,7 @@ def visualize_layout(layout, bot_position=None, captain_position=None, alien_pos
 
 # Example usage placeholder
 if __name__ == "__main__":
-    D = random.randint(1, 30)  # Dynamic ship size
+    D = random.randint(1, 50)  # Dynamic ship size
     ship_layout = generate_ship_layout(D)
     print(ship_layout.shape)
     print(ship_layout)
@@ -114,12 +132,29 @@ if __name__ == "__main__":
 
     alien_count = random.randint(1, D//2)
     exclude_positions = [bot_position]
+    #, captain_position]
     alien_positions = place_aliens(D, ship_layout, alien_count, exclude_positions)  # Reuse or define this function
-    print(alien_positions)
+    #print(alien_positions)
     while captain_position == bot_position:
         captain_position = random_position(D, ship_layout)
 
-    next_move = bot2_move(bot_position, captain_position, alien_positions, ship_layout)
-    print(f"Bot starts at: {bot_position}, Captain at: {captain_position}")    
+    steps = 0
+    max_steps = 200 # To Prevent Infinite Loop
+    while bot_position != captain_position and steps < max_steps:
+        steps += 1
+        alien_positions = move_aliens(alien_positions, ship_layout)  # Move aliens
+        next_move = bot2_move(bot_position, captain_position, alien_positions, ship_layout)  # Bot replans and moves
+        bot_position = next_move  # Update bot position
+        
+        # Update the ship layout or visualization if necessary
+        # For example, you might want to mark the new positions of the aliens and the bot
+        print(f"Step {steps}: Bot at {bot_position}, Captain at {captain_position}")
+        # visualize_layout(ship_layout, bot_position, captain_position, alien_positions)  # Visualize the layout at each step
+
+        if bot_position == captain_position:
+            print("Bot has reached the captain!")
+            break  # End the simulation if the bot reaches the captain
+    # next_move = bot2_move(bot_position, captain_position, alien_positions, ship_layout)
+    # print(f"Bot starts at: {bot_position}, Captain at: {captain_position}")    
     print(f"Bot 2 moves to: {next_move}")
     visualize_layout(ship_layout, bot_position, captain_position, alien_positions)

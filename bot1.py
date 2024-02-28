@@ -19,6 +19,17 @@ def random_position(D, grid):
             return (x, y)
     #return random.randint(0, D-1), random.randint(0, D-1)
 
+def get_neighbors(position, grid):
+    """Returns the valid neighbors for a position in the grid."""
+    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+    neighbors = []
+    for direction in directions:
+        neighbor = (position[0] + direction[0], position[1] + direction[1])
+        if 0 <= neighbor[0] < grid.shape[0] and 0 <= neighbor[1] < grid.shape[1]:
+            if grid[neighbor] == 1:  # Ensure the neighbor is an open cell
+                neighbors.append(neighbor)
+    return neighbors
+
 # Find the shortest path from start to goal using A* pathfinding."""
 def find_shortest_path(start, goal, grid):
     open_set = PriorityQueue()
@@ -38,7 +49,8 @@ def find_shortest_path(start, goal, grid):
                 path.append(current)
                 current = came_from[current]
             path.reverse()
-            return path[0:]  # Exclude the start position to get the next step
+            return path[0:]  # No excluding -- Exclude the start position to get the next step
+        
         for neighbor in get_neighbors(current, grid):
             tentative_g_score = g_score[current] + 1
             if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
@@ -50,18 +62,7 @@ def find_shortest_path(start, goal, grid):
                     open_set.put((f_score[neighbor], neighbor))
                     
     return []  # Return an empty path if there is no path to the goal
-    #pass
-
-def get_neighbors(position, grid):
-    """Returns the valid neighbors for a position in the grid."""
-    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-    neighbors = []
-    for direction in directions:
-        neighbor = (position[0] + direction[0], position[1] + direction[1])
-        if 0 <= neighbor[0] < grid.shape[0] and 0 <= neighbor[1] < grid.shape[1]:
-            if grid[neighbor] == 1:  # Ensure the neighbor is an open cell
-                neighbors.append(neighbor)
-    return neighbors
+    # pass
 
 # Uses A* Algorithm to find shortest path to the captain
 def bot1_move(bot_position, captain_position, ship_layout):
@@ -98,18 +99,30 @@ def place_aliens(D, grid, count, exclude_positions):
             grid[position] = 2  # Assuming '2' marks an alien, adjust as needed
     return aliens
 
+def move_aliens(alien_positions, grid):
+    new_alien_positions = []
+    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]  # Possible directions: right, down, left, up
+    for pos in alien_positions:
+        valid_moves = [((pos[0] + d[0], pos[1] + d[1])) for d in directions if 0 <= pos[0] + d[0] < grid.shape[0] and 0 <= pos[1] + d[1] < grid.shape[1] and grid[pos[0] + d[0], pos[1] + d[1]] == 1]
+        if valid_moves:
+            new_pos = random.choice(valid_moves)  # Choose a random valid move
+            new_alien_positions.append(new_pos)
+        else:
+            new_alien_positions.append(pos)  # Stay in place if no valid move
+    return new_alien_positions
+
 # Example usage placeholder (Actual logic to integrate with the simulation will be needed)
 if __name__ == "__main__":
     # D = 10 # yaha, I need to get this value from ship_layout (hardcoded for now)
-    D = random.randint(1, 100)
+    D = random.randint(1, 50)
     ship_layout = generate_ship_layout(D)
     print(ship_layout.shape)
     print(ship_layout)
     bot_position = random_position(D, ship_layout)
     captain_position = random_position(D, ship_layout)
 
-    alien_count = 5  # Hardcoded for now
-    exclude_positions = [bot_position, captain_position]
+    alien_count = random.randint(1, D//2)
+    exclude_positions = [bot_position]
     aliens = place_aliens(D, ship_layout, alien_count, exclude_positions)
 
     while captain_position == bot_position:  # Ensure bot and captain are not in the same position

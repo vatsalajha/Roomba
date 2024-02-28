@@ -1,5 +1,8 @@
 # bot3.py
-# Implements Bot 2: Re-plans the shortest path at every step, considering current alien positions.
+# Implements BBot 3 - At every time step, the bot re-plans the shortest path to the Captain, avoiding the current alien
+# positions and any cells adjacent to current alien positions, if possible, then executes the next step in that plan.
+# If there is no such path, it plans the shortest path based only on current alien positions, then executes the next
+# step in that plan. Note: Bot 3 resorts to Bot 2 behavior in this case
 
 import numpy as np
 import random

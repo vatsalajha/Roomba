@@ -113,6 +113,7 @@ def bot3_move(bot_position, captain_position, alien_positions, ship_layout):
     
     # start, goal, grid, alien_positions, avoid_adjacent
     path = find_shortest_path(bot_position, captain_position, ship_layout, alien_positions, True)
+    print(path)
     if not path:
         # Fallback: Avoid only alien positions directly
         path = find_shortest_path(bot_position, captain_position, ship_layout, alien_positions, False)

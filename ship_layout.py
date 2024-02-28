@@ -63,7 +63,7 @@ def open_dead_end_neighbors(layout, fraction=0.5):
             layout[to_open[0], to_open[1]] = 1
 
 def visualize_layout(layout):
-    plt.imshow(layout, cmap='Greys', interpolation='nearest')
+    plt.imshow(layout, cmap='binary', interpolation='nearest')
     plt.xticks([]), plt.yticks([])  # Hide axis ticks
     plt.show()
 

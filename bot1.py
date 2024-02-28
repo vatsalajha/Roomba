@@ -30,6 +30,18 @@ def get_neighbors(position, grid):
                 neighbors.append(neighbor)
     return neighbors
 
+# Reconstructs the path of the bot till the crew cell
+def reconstruct_path(came_from, start, goal):
+    current = goal
+    path = []
+    while current != start:
+        path.append(current)
+        current = came_from[current]
+    path.append(start)
+    path.reverse()
+    return path
+
+
 # Find the shortest path from start to goal using A* pathfinding."""
 def find_shortest_path(start, goal, grid):
     open_set = PriorityQueue()
@@ -68,6 +80,7 @@ def find_shortest_path(start, goal, grid):
 def bot1_move(bot_position, captain_position, ship_layout):
     path = find_shortest_path(bot_position, captain_position, ship_layout)
     # Move to the next cell in the path if it exists
+    print("Path")
     print(path)
     if path and len(path) > 1:
         next_step = path[0]
@@ -134,6 +147,6 @@ if __name__ == "__main__":
     # while captain_position != bot_position:
     next_move = bot1_move(bot_position, captain_position, ship_layout)
     print(f"Bot starts at: {bot_position}, Captain at: {captain_position}")
-    print(f"Bot 1 moves to: {next_move}")
+    # print(f"Bot 1 moves to: {next_move}")
     # visualize_layout(ship_layout, bot_position, captain_position)
     visualize_layout(ship_layout, bot_position, captain_position, aliens)

@@ -100,6 +100,16 @@ def bot3_move(bot_position, captain_position, alien_positions, ship_layout):
     
     # start, goal, grid, alien_positions, avoid_adjacent
     path = find_shortest_path(bot_position, captain_position, ship_layout, alien_positions, True)
+    # Reconstructs the path of the bot till the crew cell
+def reconstruct_path(came_from, start, goal):
+    current = goal
+    path = []
+    while current != start:
+        path.append(current)
+        current = came_from[current]
+    path.append(start)
+    path.reverse()
+    return path
     # print(path)
     if not path:
         # Fallback: Avoid only alien positions directly

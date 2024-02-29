@@ -80,6 +80,7 @@ def find_shortest_path(start, goal, grid):
 def bot1_move(bot_position, captain_position, ship_layout):
     path = find_shortest_path(bot_position, captain_position, ship_layout)
     # Move to the next cell in the path if it exists
+    # reconstruct = reconstruct_path(path, bot_position, captain_position)
     print("Path")
     print(path)
     if path and len(path) > 1:

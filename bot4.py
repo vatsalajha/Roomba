@@ -97,6 +97,15 @@ def place_aliens(D, grid, count, exclude_positions):
             grid[position] = 2  # Assuming '2' marks an alien, adjust as needed
     return aliens
 
+def reconstruct_path(came_from, start, goal):
+    current = goal
+    path = []
+    while current != start:
+        path.append(current)
+        current = came_from[current]
+    path.append(start)
+    path.reverse()
+    return path
 
 def move_aliens(alien_positions, grid):
     new_alien_positions = []
@@ -113,6 +122,7 @@ def move_aliens(alien_positions, grid):
 def bot4_move(bot_position, captain_position, ship_layout, aliens_positions):
     """Calculate the next move for Bot 4 considering risk scores."""
     risk_scores = calculate_risk_scores(ship_layout, aliens_positions)
+    # reconstruct = reconstruct_path(path, bot_position, captain_position)
     path = find_path_with_risk_assessment(bot_position, captain_position, ship_layout, risk_scores)
     return path[0] if path else bot_position
 

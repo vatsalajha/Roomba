@@ -148,6 +148,11 @@ def visualize_layout(layout, bot_position=None, captain_position=None, alien_pos
     inverted_layout = 1 - layout
     ax.imshow(layout, cmap='binary', interpolation='nearest')  # 'binary' for black and white
     # 0 white (BLOCKED), 1 black (OPEN)
+
+    # Highlighting the path
+    for p in path:
+        ax.plot(p[1], p[0], 'yx')
+
     if bot_position:
         ax.plot(bot_position[1], bot_position[0], 'bo', markersize=5)  # Bot in blue
     if captain_position:

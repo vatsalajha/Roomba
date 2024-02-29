@@ -20,6 +20,9 @@ def random_position(D, ship_layout):
 def visualize_layout_with_risks(ship_layout, risk_scores, bot_position, captain_position, aliens_positions):
     """Visualize the ship layout with risk scores, bot, captain, and aliens."""
     fig, ax = plt.subplots()
+    # Highlighting the path
+    for p in path:
+        ax.plot(p[1], p[0], 'yx')
     cmap = plt.cm.viridis  # Use a colormap that represents risk well, like viridis
     risk_overlay = np.ma.masked_where(ship_layout == 0, risk_scores)  # Mask areas with no risk
     ax.imshow(ship_layout, cmap='Greys', interpolation='nearest')  # Ship layout in grey scale

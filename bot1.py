@@ -30,7 +30,7 @@ def get_neighbors(position, grid):
                 neighbors.append(neighbor)
     return neighbors
 
-# Reconstructs the path of the bot till the crew cell
+# Reconstructs the path of the bot till the captain cell
 def reconstruct_path(came_from, start, goal):
     current = goal
     path = []
@@ -40,7 +40,6 @@ def reconstruct_path(came_from, start, goal):
     path.append(start)
     path.reverse()
     return path
-
 
 # Find the shortest path from start to goal using A* pathfinding."""
 def find_shortest_path(start, goal, grid):
@@ -94,6 +93,10 @@ def visualize_layout(layout, bot_position=None, captain_position=None, alien_pos
     fig, ax = plt.subplots()
     ax.imshow(layout, cmap='binary', interpolation='nearest')
 
+    # Highlighting the path
+    for p in path:
+        ax.plot(p[1], p[0], 'yx')
+
     if bot_position:
         ax.plot(bot_position[1], bot_position[0], 'bo')  # Bot in blue
     if captain_position:
@@ -141,6 +144,9 @@ if __name__ == "__main__":
 
     while captain_position == bot_position:  # Ensure bot and captain are not in the same position
         captain_position = random_position(D, ship_layout)
+
+    path = find_shortest_path(bot_position, captain_position, ship_layout)
+    print(path)
 
     #ship_layout = np.ones((10, 10), dtype=int)  # Example: Open grid
     #ship_layout[5, :] = 0  # Example: Adding a row of blocked cells for complexity

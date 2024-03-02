@@ -83,7 +83,7 @@ def bot1_move(bot_position, captain_position, ship_layout):
     print("Path")
     print(path)
     if path and len(path) > 1:
-        next_step = path[0]
+        next_step = path[1]   ## Changed this to 1, why ??????? ##
     else:
         next_step = bot_position  # Stay in place if no path is found
     return next_step
@@ -130,7 +130,7 @@ def move_aliens(alien_positions, grid):
 
 # Example usage placeholder (Actual logic to integrate with the simulation will be needed)
 if __name__ == "__main__":
-    # D = 10 # yaha, I need to get this value from ship_layout (hardcoded for now)
+    #D = 50 # yaha, I need to get this value from ship_layout (hardcoded for now)
     D = random.randint(1, 50)
     ship_layout = generate_ship_layout(D)
     print(ship_layout.shape)
@@ -148,12 +148,28 @@ if __name__ == "__main__":
     path = find_shortest_path(bot_position, captain_position, ship_layout)
     print(path)
 
+    if path and len(path) > 1:
+        for steps in range(1000):
+            if steps == len(path):
+                break
+            bot_position = path[steps]
+            if bot_position in aliens:
+                print(f"Mission Failed(1) : Captured by Aliens at {bot_position} on step {steps}")
+                break
+            aliens = move_aliens(aliens,ship_layout)
+            if bot_position in aliens:
+                print(f"Mission Failed(2) : Captured by Aliens at {bot_position} on step {steps}")
+                break
+            print(f"Step {steps}: Bot at {bot_position}, Captain at {captain_position}")
+            if captain_position == bot_position:
+                print(f"Mission Successful : Captain Saved on step {steps}")
+                break
+            visualize_layout(ship_layout, bot_position, captain_position, aliens)
+            # Use this visualization - mast hai
+        else:
+            print("Mission Failed(3) : No Path Found")
+
     #ship_layout = np.ones((10, 10), dtype=int)  # Example: Open grid
     #ship_layout[5, :] = 0  # Example: Adding a row of blocked cells for complexity
     
-    # while captain_position != bot_position:
-    next_move = bot1_move(bot_position, captain_position, ship_layout)
-    print(f"Bot starts at: {bot_position}, Captain at: {captain_position}")
-    # print(f"Bot 1 moves to: {next_move}")
-    # visualize_layout(ship_layout, bot_position, captain_position)
-    visualize_layout(ship_layout, bot_position, captain_position, aliens)
+    # visualize_layout(ship_layout, bot_position, captain_position, aliens)

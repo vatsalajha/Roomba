@@ -17,30 +17,9 @@ def random_position(D, ship_layout):
         if ship_layout[x, y] == 1:  # Assuming 1 indicates an open cell
             return (x, y)
 
-def visualize_layout_with_risks(ship_layout, risk_scores, bot_position, captain_position, aliens_positions):
-    """Visualize the ship layout with risk scores, bot, captain, and aliens."""
-    fig, ax = plt.subplots()
-    # Highlighting the path
-    for p in path:
-        ax.plot(p[1], p[0], 'yx')
-    cmap = plt.cm.viridis  # Use a colormap that represents risk well, like viridis
-    risk_overlay = np.ma.masked_where(ship_layout == 0, risk_scores)  # Mask areas with no risk
-    ax.imshow(ship_layout, cmap='Greys', interpolation='nearest')  # Ship layout in grey scale
-    ax.imshow(risk_overlay, cmap=cmap, alpha=0.5, interpolation='nearest')  # Overlay risk scores
-
-    # Mark bot, captain, and aliens
-    ax.plot(bot_position[1], bot_position[0], 'bo', markersize=10)  # Bot in blue
-    ax.plot(captain_position[1], captain_position[0], 'go', markersize=10)  # Captain in green
-    for alien in aliens_positions:
-        ax.plot(alien[1], alien[0], 'rx', markersize=10)  # Aliens in red with an 'x'
-
-    plt.xticks([]), plt.yticks([])  # Hide axis ticks
-    plt.show()
-
 def calculate_risk_scores(ship_layout, aliens_positions, risk_range=3):
     D = ship_layout.shape[0]
     risk_scores = np.zeros_like(ship_layout, dtype=np.float32)
-    
     # Adjust risk increment based on proximity to aliens
     for alien in aliens_positions:
         for dx in range(-risk_range, risk_range + 1):
@@ -68,28 +47,51 @@ def find_path_with_risk_assessment(start, goal, ship_layout, risk_scores, risk_m
         current = frontier.get()[1]
 
         if current == goal:
-            break
+            # Reconstruct path
+            path = []
+            # current = goal
+            while current in came_from:
+                path.append(current)
+                current = came_from.get(current)  # Removed , None) -------------
+            path.reverse()  # Reverse to get path from start to goal
+            return path
+            # break
 
         for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
             next = (current[0] + dx, current[1] + dy)
-            if 0 <= next[0] < D and 0 <= next[1] < D and ship_layout[next[0], next[1]] != 0:  # Assume 0 as blocked
+            if 0 <= next[0] < D and 0 <= next[1] < D and ship_layout[next[0], next[1]] == 1:  # Assume 0 as blocked changed !=0 to ==1 -------
+                risk_scores = np.array(risk_scores)  # Ensure risk_scores is a NumPy array
                 new_cost = cost_so_far[current] + 1 + (risk_scores[next[0], next[1]] * risk_multiplier)
                 if next not in cost_so_far or new_cost < cost_so_far[next]:
                     cost_so_far[next] = new_cost
                     priority = new_cost + heuristic(goal, next)
                     frontier.put((priority, next))
                     came_from[next] = current
+    return []
 
-    # Reconstruct path
-    path = []
-    current = goal
-    while current != start:
-        if current is None:  # No path found
-            return []
-        path.append(current)
-        current = came_from.get(current, None)
-    path.reverse()  # Reverse to get path from start to goal
-    return path
+def visualize_layout_with_risks(ship_layout, risk_scores, bot_position, captain_position, aliens_positions, path):  # Added path ------
+    """Visualize the ship layout with risk scores, bot, captain, and aliens."""
+    fig, ax = plt.subplots()
+    cmap = plt.cm.viridis  # Use a colormap that represents risk well, like viridis
+    risk_overlay = np.ma.masked_where(ship_layout == 0, risk_scores)  # Mask areas with no risk
+    ax.imshow(ship_layout, cmap='Greys', interpolation='nearest')  # Ship layout in grey scale
+    ax.imshow(risk_overlay, cmap=cmap, alpha=0.5, interpolation='nearest')  # Overlay risk scores
+
+    # # Highlighting the path
+    # for p in path:
+    #     ax.plot(p[1], p[0], 'yx')
+    if isinstance(path, list) and all(isinstance(p, tuple) and len(p) == 2 for p in path):
+        for p in path:
+            ax.add_patch(plt.Circle((p[1], p[0]), 0.3, color='yellow'))  # Correctly visualize path
+
+    # Mark bot, captain, and aliens
+    ax.plot(bot_position[1], bot_position[0], 'bo')  # Bot in blue
+    ax.plot(captain_position[1], captain_position[0], 'go')  # Captain in green
+    for alien in aliens_positions:
+        ax.plot(alien[1], alien[0], 'rx')  # Aliens in red with an 'x'
+
+    plt.xticks([]), plt.yticks([])  # Hide axis ticks
+    plt.show()
 
 def place_aliens(D, grid, count, exclude_positions):
     aliens = []
@@ -127,7 +129,10 @@ def bot4_move(bot_position, captain_position, ship_layout, aliens_positions):
     risk_scores = calculate_risk_scores(ship_layout, aliens_positions)
     # reconstruct = reconstruct_path(path, bot_position, captain_position)
     path = find_path_with_risk_assessment(bot_position, captain_position, ship_layout, risk_scores)
-    return path[0] if path else bot_position
+    # Ensure there's a path and it has at least one step beyond the current position
+    next_step = path[1] if len(path) > 1 else bot_position
+    return next_step, path, risk_scores  # Return the next step, full path for visualization, and risk scores
+    # return path[0] if path else bot_position
 
 # Example usage placeholder
 if __name__ == "__main__":
@@ -145,20 +150,35 @@ if __name__ == "__main__":
     #print(alien_positions)
     while captain_position == bot_position:
         captain_position = random_position(D, ship_layout)
-
-    path = find_path_with_risk_assessment(bot_position, captain_position, ship_layout, alien_positions, True)
-    print(path)
+    
+    # Correctly calculate risk scores before finding the path
+    risk_scores = calculate_risk_scores(ship_layout, alien_positions)
+    next_move, path, risk_scores = bot4_move(bot_position, captain_position, ship_layout, alien_positions)
+    bot_position = next_move
+    print("Path:", path)
 
     steps = 0
     max_steps = 1000 # To Prevent Infinite Loop
     while bot_position != captain_position and steps < max_steps:
         steps += 1
         alien_positions = move_aliens(alien_positions, ship_layout)  # Move aliens
-        previous_position = bot_position
-        risk_scores = calculate_risk_scores(ship_layout, aliens_positions)
-        next_move = bot4_move(bot_position, captain_position, ship_layout, aliens_positions)
-        bot_position = next_move if next_move else bot_position  # Update bot position only if next_move is valid
+        previous_position = bot_position  
+              
+        # Recalculate risk scores based on updated alien positions
+        # risk_scores = calculate_risk_scores(ship_layout, alien_positions)
+        # Find the new path with updated risk scores and alien positions
+        next_move, path, risk_scores = bot4_move(bot_position, captain_position, ship_layout, alien_positions)
+        path = next_move
+        bot_position = next_move 
+        # if next_move else bot_position  # Update bot position only if next_move is valid
 
+        if bot_position in alien_positions:
+            print(f"Mission Failed(1) : Captured by Aliens at {bot_position} on step {steps}")
+            break
+        alien_positions = move_aliens(alien_positions,ship_layout)
+        if bot_position in alien_positions:
+            print(f"Mission Failed(1) : Captured by Aliens at {bot_position} on step {steps}")
+            break
         if bot_position == previous_position:
             print(f"Step {steps}: Bot is stuck at {bot_position}, trying to reach Captain at {captain_position}.")
         else:
@@ -168,6 +188,7 @@ if __name__ == "__main__":
             print("Bot has successfully reached the captain!")
             break
 
-    visualize_layout_with_risks(ship_layout, risk_scores, bot_position, captain_position, aliens_positions)
-    # print(f"Next move for Bot 4: {next_move}")
+        # Update the visualization at each step
+        if steps % 3 == 0:  # For example, update the visualization every 10 steps
+            visualize_layout_with_risks(ship_layout, risk_scores, bot_position, captain_position, alien_positions, path)
 

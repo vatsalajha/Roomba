@@ -113,25 +113,54 @@ def bot3_move(bot_position, captain_position, alien_positions, ship_layout):
         next_step = bot_position  # Stay in place if no path is found
     return next_step
 
-def visualize_layout(layout, bot_position=None, captain_position=None, alien_positions=[]):
+def visualize_layout(layout, bot_position, captain_position, alien_positions, path):
     fig, ax = plt.subplots()
-    # inverted_layout = 1 - layout
-    ax.imshow(layout, cmap='binary', interpolation='nearest')  # 'binary' for black and white
-    # 0 white (BLOCKED), 1 black (OPEN)
-
-    # Highlighting the path
-    for p in path:
-        ax.plot(p[1], p[0], 'yx')
-
-    if bot_position:
-        ax.plot(bot_position[1], bot_position[0], 'bo')  # Bot in blue
-    if captain_position:
-        ax.plot(captain_position[1], captain_position[0], 'go')  # Captain in green
+    ax.imshow(layout, cmap='binary', interpolation='nearest')  # Ship layout
+    
+    # Highlight dangerous adjacent cells
+    danger_zone = set()
     for alien in alien_positions:
-        ax.plot(alien[1], alien[0], 'ro')  # Aliens in red
+        for dx in [-1, 0, 1]:
+            for dy in [-1, 0, 1]:
+                if 0 <= alien[0] + dx < layout.shape[0] and 0 <= alien[1] + dy < layout.shape[1]:
+                    danger_zone.add((alien[0] + dx, alien[1] + dy))
+    
+    for cell in danger_zone:
+        ax.add_patch(plt.Circle((cell[1], cell[0]), 0.5, color='orange', alpha=0.3))  # Marking adjacent cells in orange
 
-    plt.xticks([]), plt.yticks([])  # Hide axis ticks
+    # Highlight path
+    if isinstance(path, list) and all(isinstance(p, tuple) and len(p) == 2 for p in path):
+        for p in path:
+            ax.add_patch(plt.Circle((p[1], p[0]), 0.3, color='yellow'))  # Correctly visualize path
+            
+    # Mark entities on the board
+    ax.plot(bot_position[1], bot_position[0], 'bo')  # Bot in blue
+    ax.plot(captain_position[1], captain_position[0], 'go')  # Captain in green
+    for alien in alien_positions:
+        ax.plot(alien[1], alien[0], 'rx')  # Aliens in red
+
+    plt.xticks([]), plt.yticks([])
     plt.show()
+
+# def visualize_layout(layout, bot_position=None, captain_position=None, alien_positions=[]):
+    # fig, ax = plt.subplots()
+    # # inverted_layout = 1 - layout
+    # ax.imshow(layout, cmap='binary', interpolation='nearest')  # 'binary' for black and white
+    # # 0 white (BLOCKED), 1 black (OPEN)
+
+    # # Highlighting the path
+    # for p in path:
+    #     ax.plot(p[1], p[0], 'yx')
+
+    # if bot_position:
+    #     ax.plot(bot_position[1], bot_position[0], 'bo')  # Bot in blue
+    # if captain_position:
+    #     ax.plot(captain_position[1], captain_position[0], 'go')  # Captain in green
+    # for alien in alien_positions:
+    #     ax.plot(alien[1], alien[0], 'ro')  # Aliens in red
+
+    # plt.xticks([]), plt.yticks([])  # Hide axis ticks
+    # plt.show()
 
 def place_aliens(D, grid, count, exclude_positions):
     aliens = []
@@ -171,8 +200,8 @@ if __name__ == "__main__":
     while captain_position == bot_position:
         captain_position = random_position(D, ship_layout)
 
-    path = find_shortest_path(bot_position, captain_position, ship_layout, alien_positions, True)
-    print(path)
+    # path = find_shortest_path(bot_position, captain_position, ship_layout, alien_positions, True)
+    # print(path)
 
     steps = 0
     max_steps = 1000 # To Prevent Infinite Loop
@@ -181,7 +210,9 @@ if __name__ == "__main__":
         alien_positions = move_aliens(alien_positions, ship_layout)  # Move aliens
         previous_position = bot_position
         next_move = bot3_move(bot_position, captain_position, alien_positions, ship_layout)  # Bot replans and moves
+        path = next_move
         bot_position = next_move  # Update bot position
+        # bot_position = path[0] if path else bot_position
 
         # Ye check karo ^
 
@@ -202,4 +233,4 @@ if __name__ == "__main__":
         if bot_position == captain_position:
             print("Bot has successfully reached the captain!")
             break
-        visualize_layout(ship_layout, bot_position, captain_position, alien_positions)
+        visualize_layout(ship_layout, bot_position, captain_position, alien_positions, path)

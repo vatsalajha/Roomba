@@ -148,7 +148,7 @@ if __name__ == "__main__":
     print(path)
 
     steps = 0
-    max_steps = 100 # To Prevent Infinite Loop
+    max_steps = 1000 # To Prevent Infinite Loop
     flag = True
     while bot_position != captain_position and steps < max_steps:
         steps += 1

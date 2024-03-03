@@ -53,6 +53,18 @@ def get_neighbors(position, grid, alien_positions):
                 neighbors.append(neighbor)
     return neighbors
 
+# Should we remove this now ????
+def reconstruct_path(came_from, start, goal):
+    current = goal
+    path = []
+    while current != start:
+        path.append(current)
+        current = came_from[current]
+    path.append(start)
+    path.reverse()
+    return path
+    # print(path)
+
 # Find the shortest path from start to goal using A* pathfinding."""
 def find_shortest_path(start, goal, grid, alien_positions, avoid_adjacent):
     open_set = PriorityQueue()
@@ -82,18 +94,7 @@ def find_shortest_path(start, goal, grid, alien_positions, avoid_adjacent):
                 f_score[neighbor] = tentative_g_score + heuristic(neighbor, goal)
                 if not any(neighbor == q_item[1] for q_item in open_set.queue):
                     open_set.put((f_score[neighbor], neighbor))
-    # return []
-
-# Should we remove this now ????
-def reconstruct_path(came_from, start, goal):
-    current = goal
-    path = []
-    while current != start:
-        path.append(current)
-        current = came_from[current]
-    path.append(start)
-    path.reverse()
-    return path
+    return []
 
 def bot3_move(bot_position, captain_position, alien_positions, ship_layout):
     # First attempt: Avoid aliens and adjacent cells
@@ -101,25 +102,36 @@ def bot3_move(bot_position, captain_position, alien_positions, ship_layout):
     # start, goal, grid, alien_positions, avoid_adjacent
     path = find_shortest_path(bot_position, captain_position, ship_layout, alien_positions, True)
     # Reconstructs the path of the bot till the crew cell
-def reconstruct_path(came_from, start, goal):
-    current = goal
-    path = []
-    while current != start:
-        path.append(current)
-        current = came_from[current]
-    path.append(start)
-    path.reverse()
-    return path
-    # print(path)
+    print("Path")
+    print(path)
     if not path:
         # Fallback: Avoid only alien positions directly
         path = find_shortest_path(bot_position, captain_position, ship_layout, alien_positions, False)
     if path:
-        next_step = path[0]
+        next_step = path[1] # Why 1 , not 0?
     else:
         next_step = bot_position  # Stay in place if no path is found
     return next_step
 
+def visualize_layout(layout, bot_position=None, captain_position=None, alien_positions=[]):
+    fig, ax = plt.subplots()
+    # inverted_layout = 1 - layout
+    ax.imshow(layout, cmap='binary', interpolation='nearest')  # 'binary' for black and white
+    # 0 white (BLOCKED), 1 black (OPEN)
+
+    # Highlighting the path
+    for p in path:
+        ax.plot(p[1], p[0], 'yx')
+
+    if bot_position:
+        ax.plot(bot_position[1], bot_position[0], 'bo')  # Bot in blue
+    if captain_position:
+        ax.plot(captain_position[1], captain_position[0], 'go')  # Captain in green
+    for alien in alien_positions:
+        ax.plot(alien[1], alien[0], 'ro')  # Aliens in red
+
+    plt.xticks([]), plt.yticks([])  # Hide axis ticks
+    plt.show()
 
 def place_aliens(D, grid, count, exclude_positions):
     aliens = []
@@ -143,28 +155,6 @@ def move_aliens(alien_positions, grid):
             new_alien_positions.append(pos)  # Stay in place if no valid move
     return new_alien_positions
 
-def visualize_layout(layout, bot_position=None, captain_position=None, alien_positions=[]):
-    fig, ax = plt.subplots()
-    inverted_layout = 1 - layout
-    ax.imshow(layout, cmap='binary', interpolation='nearest')  # 'binary' for black and white
-    # 0 white (BLOCKED), 1 black (OPEN)
-
-    # Highlighting the path
-    for p in path:
-        ax.plot(p[1], p[0], 'yx')
-
-    if bot_position:
-        ax.plot(bot_position[1], bot_position[0], 'bo', markersize=5)  # Bot in blue
-    if captain_position:
-        ax.plot(captain_position[1], captain_position[0], 'go', markersize=5)  # Captain in green
-    for alien in alien_positions:
-        ax.plot(alien[1], alien[0], 'ro', markersize=5)  # Aliens in red
-
-    plt.xticks([]), plt.yticks([])  # Hide axis ticks
-    plt.show()
-
-
-# Example usage placeholder
 if __name__ == "__main__":
     D = random.randint(1, 50)  # Dynamic ship size
     ship_layout = generate_ship_layout(D)
@@ -191,9 +181,19 @@ if __name__ == "__main__":
         alien_positions = move_aliens(alien_positions, ship_layout)  # Move aliens
         previous_position = bot_position
         next_move = bot3_move(bot_position, captain_position, alien_positions, ship_layout)  # Bot replans and moves
-        # bot_position = next_move  # Update bot position
-        bot_position = next_move if next_move else bot_position  # Update bot position only if next_move is valid
+        bot_position = next_move  # Update bot position
 
+        # Ye check karo ^
+
+        # bot_position = next_move if next_move else bot_position  # Update bot position only if next_move is valid
+        
+        if bot_position in alien_positions:
+            print(f"Mission Failed(1) : Captured by Aliens at {bot_position} on step {steps}")
+            break
+        alien_positions = move_aliens(alien_positions,ship_layout)
+        if bot_position in alien_positions:
+            print(f"Mission Failed(1) : Captured by Aliens at {bot_position} on step {steps}")
+            break
         if bot_position == previous_position:
             print(f"Step {steps}: Bot is stuck at {bot_position}, trying to reach Captain at {captain_position}.")
         else:
@@ -202,5 +202,4 @@ if __name__ == "__main__":
         if bot_position == captain_position:
             print("Bot has successfully reached the captain!")
             break
-
-    visualize_layout(ship_layout, bot_position, captain_position, alien_positions)
+        visualize_layout(ship_layout, bot_position, captain_position, alien_positions)

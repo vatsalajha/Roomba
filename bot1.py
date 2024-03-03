@@ -3,9 +3,45 @@
 
 import numpy as np
 import random
+import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
+
 from queue import PriorityQueue
 from ship_layout import generate_ship_layout
+
+def simulate_bot1(D, K_range, num_trials):
+    results = []
+
+    for K in K_range:
+        for _ in range(num_trials):
+            ship_layout = generate_ship_layout(D)
+            bot_position = random_position(D, ship_layout)
+            captain_position = random_position(D, ship_layout)
+            aliens = place_aliens(D, ship_layout, K, [bot_position])
+
+            path = find_shortest_path(bot_position, captain_position, ship_layout)
+            success = False
+            steps_taken = len(path) if path else 0
+
+            if path:
+                for step_pos in path[1:]:
+                    if tuple(step_pos) in aliens:
+                        success = False
+                        break
+                    aliens = move_aliens(aliens, ship_layout)
+                else:
+                    if tuple(path[-1]) == tuple(captain_position):
+                        success = True
+
+            results.append({
+                'K': K,
+                'Success': success,
+                'Steps': steps_taken
+            })
+
+    return pd.DataFrame(results)
+
 
 def heuristic(a, b):
     """Calculate the Manhattan distance between two points"""
@@ -130,8 +166,8 @@ def move_aliens(alien_positions, grid):
 
 # Example usage placeholder (Actual logic to integrate with the simulation will be needed)
 if __name__ == "__main__":
-    #D = 50 # yaha, I need to get this value from ship_layout (hardcoded for now)
-    D = random.randint(1, 50)
+    D = 30 # yaha, I need to get this value from ship_layout (hardcoded for now)
+    #D = random.randint(1, 30)
     ship_layout = generate_ship_layout(D)
     print(ship_layout.shape)
     print(ship_layout)
@@ -139,6 +175,10 @@ if __name__ == "__main__":
     captain_position = random_position(D, ship_layout)
 
     alien_count = random.randint(1, D//2)
+    K_range = range(1, (D//2)^2)
+    num_trials = 500
+    data = simulate_bot1(D, K_range, num_trials)
+
     exclude_positions = [bot_position]
     aliens = place_aliens(D, ship_layout, alien_count, exclude_positions)
 
@@ -171,5 +211,18 @@ if __name__ == "__main__":
 
     #ship_layout = np.ones((10, 10), dtype=int)  # Example: Open grid
     #ship_layout[5, :] = 0  # Example: Adding a row of blocked cells for complexity
-    
+    # Visualizing the data
+    plt.figure(figsize=(10, 6))
+    sns.lineplot(data=data, x='K', y='Success', estimator=np.mean)
+    plt.title('Bot 1 Success Rate vs Number of Aliens')
+    plt.xlabel('Number of Aliens (K)')
+    plt.ylabel('Success Rate')
+    plt.show()
+
+    plt.figure(figsize=(10, 6))
+    sns.lineplot(data=data, x='K', y='Steps', estimator=np.mean)
+    plt.title('Bot 1 Average Steps vs Number of Aliens')
+    plt.xlabel('Number of Aliens (K)')
+    plt.ylabel('Average Steps to Reach the Captain')
+    plt.show()
     # visualize_layout(ship_layout, bot_position, captain_position, aliens)

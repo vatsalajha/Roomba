@@ -75,7 +75,7 @@ def simulate_bot3(D, K_range, num_trials, ship_layout):
 
 
             results.append({
-                'K_bot3': K,
+                'K': K,
                 'Success_bot3': success,
                 'Steps_bot3': steps_taken,
                 'Survival_bot3': survival
@@ -257,7 +257,7 @@ if __name__ == "__main__":
     K_range = range(0,101,2)
     num_trials = 250
 
-    bot3_data = {'K_bot3': [], 'Success_bot3': [], 'Steps_bot3': [], 'Survival_bot3': []}
+    bot3_data = {'K': [], 'Success_bot3': [], 'Steps_bot3': [], 'Survival_bot3': []}
 
     # Pass pre-generated ship layout, bot position, and captain position to the simulation method
     bot3_df = simulate_bot3(D, K_range, num_trials, ship_layout)
@@ -271,7 +271,7 @@ if __name__ == "__main__":
     # Visualizing the data
     plt.figure(figsize=(10, 6))
     #sns.lineplot(data=bot1_df, x='K', y='Success', estimator=np.mean)
-    sns.lineplot(data=bot3_df, x='K_bot3', y='Success_bot3')
+    sns.lineplot(data=bot3_df, x='K', y='Success_bot3')
     plt.title('Bot 3 Success Rate vs Number of Aliens')
     plt.xlabel('Number of Aliens (K)')
     plt.ylabel('Success Rate')
@@ -280,7 +280,7 @@ if __name__ == "__main__":
 
     plt.figure(figsize=(10, 6))
     #sns.lineplot(data=bot1_df, x='K', y='Steps', estimator=np.mean)
-    sns.lineplot(data=bot3_df, x='K_bot3', y='Survival_bot3')
+    sns.lineplot(data=bot3_df, x='K', y='Survival_bot3')
     plt.title('Bot 3 Survival Rate vs Number of Aliens')
     plt.xlabel('Number of Aliens (K)')
     plt.ylabel('Survival Rate')

@@ -16,45 +16,51 @@ def simulate_bot4(D, K_range, num_trials, ship_layout):
 
     for K in K_range:
         print(f"Simulation for {K} Aliens")
-        for trial in range(num_trials):
-            print(f"Trial: ({K}, {trial})")
+        for _ in range(num_trials):
+            print(f"Trial: ({K}, {_})")
             bot_position = random_position(D, ship_layout)
             captain_position = random_position(D, ship_layout)
+            exclude_positions = [bot_position]
+            remove_aliens(D, ship_layout)
+            aliens_positions = place_aliens(D, ship_layout, K, exclude_positions)
             
             while captain_position == bot_position:
                 captain_position = random_position(D, ship_layout)
             
-            exclude_positions = [bot_position]
-            remove_aliens(D, ship_layout)
-            aliens_positions = place_aliens(D, ship_layout, K, exclude_positions)
             risk_scores = calculate_risk_scores(ship_layout, aliens_positions)
-            next_move, path, _ = bot4_move(bot_position, captain_position, ship_layout, aliens_positions)
-            steps = 0
+            path = find_path_with_risk_assessment(bot_position, captain_position, ship_layout, risk_scores) 
             success = False
             alive = True
+            steps = len(path) if path else 0
 
-            while steps < 1000:
-                steps += 1
-                bot_position = next_move
-                # next_move, path, _ = bot4_move(bot_position, captain_position, ship_layout, aliens_positions)
-
-                if bot_position == captain_position:
-                    success = True
-                    break
-
-                risk_scores = calculate_risk_scores(ship_layout, aliens_positions)
-                next_move, path, _ = bot4_move(bot_position, captain_position, ship_layout, aliens_positions)
-                aliens_positions = move_aliens(aliens_positions, ship_layout)
-                if bot_position in aliens_positions:
-                    success = False
-                    alive = False
-                    break
+            if path:
+                for steps in range(1000):
+                    if steps == len(path):
+                        break
+                    bot_position = path[steps]
+                    if bot_position in aliens_positions:
+                        alive = False
+                        success = False
+                        break
+                    aliens_positions = move_aliens(aliens_positions, ship_layout)
+                    if bot_position in aliens_positions:
+                        alive = False
+                        success = False
+                        break
+                    if bot_position == captain_position:
+                        success = True
+                        success_count += 1
+                        print("Successful Mission", success_count)
+                        break
+            else:
+                success = False
                 # visualize_layout_with_risks(ship_layout, risk_scores, bot_position, captain_position, aliens_positions, path)
             survival = (alive and steps == 1000) / (num_trials - success_count) if num_trials - success_count != 0 else 1.0
             # Calculate survival rate as (bot didn't die and crossed 1000 steps) / (total trials - successful runs)
             # Instead of calculating averages and success rates here, simply record each trial's outcome
+            
             results.append({
-                'K_bot4': K,
+                'K': K,
                 'Success_bot4': success,
                 'Steps_bot4': steps,
                 'Survival_bot4': survival
@@ -158,7 +164,7 @@ def find_path_with_risk_assessment(start, goal, ship_layout, risk_scores, risk_m
                 path.append(current)
                 current = came_from.get(current)  # Removed , None) -------------
             path.reverse()  # Reverse to get path from start to goal
-            return path[0:]
+            return path
             # break
 
         for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
@@ -172,6 +178,23 @@ def find_path_with_risk_assessment(start, goal, ship_layout, risk_scores, risk_m
                     open_set.put((priority, next))
                     came_from[next] = current
     return []
+
+def bot4_move(bot_position, captain_position, ship_layout, aliens_positions):
+    """Calculate the next move for Bot 4 considering risk scores."""
+    risk_scores = calculate_risk_scores(ship_layout, aliens_positions)
+    # reconstruct = reconstruct_path(path, bot_position, captain_position)
+    path = find_path_with_risk_assessment(bot_position, captain_position, ship_layout, risk_scores)
+    print("Path", path)
+    if not path:
+        path = find_path_with_risk_assessment(bot_position, captain_position, ship_layout, risk_scores)
+    if path:
+        next_step = path[1]
+    else:
+        next_step = bot_position
+    # Ensure there's a path and it has at least one step beyond the current position
+    # next_step = path[1] if len(path) > 1 else bot_position
+    # return next_step, path, risk_scores  # Return the next step, full path for visualization, and risk scores
+    return next_step
 
 def visualize_layout_with_risks(ship_layout, risk_scores, bot_position, captain_position, aliens_positions, path):  # Added path ------
     """Visualize the ship layout with risk scores, bot, captain, and aliens."""
@@ -233,16 +256,6 @@ def move_aliens(alien_positions, grid):
             new_alien_positions.append(pos)  # Stay in place if no valid move
     return new_alien_positions
 
-def bot4_move(bot_position, captain_position, ship_layout, aliens_positions):
-    """Calculate the next move for Bot 4 considering risk scores."""
-    risk_scores = calculate_risk_scores(ship_layout, aliens_positions)
-    # reconstruct = reconstruct_path(path, bot_position, captain_position)
-    path = find_path_with_risk_assessment(bot_position, captain_position, ship_layout, risk_scores)
-    # Ensure there's a path and it has at least one step beyond the current position
-    next_step = path[1] if len(path) > 1 else bot_position
-    return next_step, path, risk_scores  # Return the next step, full path for visualization, and risk scores
-    # return path[0] if path else bot_position
-
 # Example usage placeholder
 if __name__ == "__main__":
     D = 30
@@ -250,12 +263,12 @@ if __name__ == "__main__":
     K_range = range(0,101,2)
     num_trials = 250
 
-    bot4_data = {'K_bot4': [], 'Success_bot4': [], 'Steps_bot4': [],'Survival_bot4': []}
+    bot4_data = {'K': [], 'Success_bot4': [], 'Steps_bot4': [],'Survival_bot4': []}
 
     bot4_df = simulate_bot4(D, K_range, num_trials, ship_layout)
 
     print(bot4_df.head())
-    print(bot4_df.describe())
+    # print(bot4_df.describe())
 
     bot4_df.to_csv('bot4_data.csv', index=False)
 
@@ -264,7 +277,7 @@ if __name__ == "__main__":
 
     # Plotting Success Rate vs Number of Aliens
     plt.figure(figsize=(10, 6))
-    sns.lineplot(data=bot4_df, x='K_bot4', y='Success_bot4')
+    sns.lineplot(data=bot4_df, x='K', y='Success_bot4')
     plt.title('Bot 4 Success Rate vs Number of Aliens')
     plt.xlabel('Number of Aliens (K)')
     plt.ylabel('Success Rate')
@@ -272,10 +285,10 @@ if __name__ == "__main__":
 
     # Plotting Average Steps vs Number of Aliens
     plt.figure(figsize=(10, 6))
-    sns.lineplot(data=bot4_df, x='K_bot4', y='Survival_bot4', color='red')
+    sns.lineplot(data=bot4_df, x='K', y='Survival_bot4')
     plt.title('Bot 4 Survival Rate vs Number of Aliens')
     plt.xlabel('Number of Aliens (K)')
-    plt.ylabel('Survival Rate to Reach the Captain')
+    plt.ylabel('Survival Rate')
     plt.show()
 
     # D = random.randint(1, 50)  # Dynamic ship size

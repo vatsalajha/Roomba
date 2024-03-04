@@ -10,35 +10,83 @@ import seaborn as sns
 from queue import PriorityQueue
 from ship_layout import generate_ship_layout
 
-def simulate_bot1(D, K_range, num_trials):
+def simulate_bot1(D, K_range, num_trials, ship_layout):
     results = []
+    success_count = 0
+    #ship_layout = generate_ship_layout(D)
 
     for K in K_range:
+        print(f"Simulation for {K} Aliens")
         for _ in range(num_trials):
-            ship_layout = generate_ship_layout(D)
-            bot_position = random_position(D, ship_layout)
-            captain_position = random_position(D, ship_layout)
-            aliens = place_aliens(D, ship_layout, K, [bot_position])
+            print(f"Trial: ({K}, {_})")
+            bot_position = random_position(D, ship_layout)  # Place the bot randomly
+            captain_position = random_position(D, ship_layout)  # Place the captain randomly
+            exclude_positions = [bot_position]  # Exclude bot's position from alien placement
+            remove_aliens(D, ship_layout)
+            aliens = place_aliens(D, ship_layout, K, exclude_positions)  # Place aliens randomly
+
+            while captain_position == bot_position:  # Ensure bot and captain are not in the same position
+                captain_position = random_position(D, ship_layout)
 
             path = find_shortest_path(bot_position, captain_position, ship_layout)
             success = False
+            alive = True
             steps_taken = len(path) if path else 0
 
             if path:
-                for step_pos in path[1:]:
-                    if tuple(step_pos) in aliens:
-                        success = False
+                for steps in range(1000):
+                    if steps == len(path):
+                        break
+                    bot_position = path[steps]
+                    if bot_position in aliens:
+                        #print(f"Mission Failed(1) : Captured by Aliens at {bot_position} on step {steps}")
+                        alive = False
+                        success = False  # Set success to False when the bot encounters aliens
                         break
                     aliens = move_aliens(aliens, ship_layout)
-                else:
-                    if tuple(path[-1]) == tuple(captain_position):
-                        success = True
+                    #exclude_positions = [bot_position]  # Update exclude_positions after the bot moves
+                    if bot_position in aliens:
+                        #print(f"Mission Failed(2) : Captured by Aliens at {bot_position} on step {steps}")
+                        alive = False
+                        success = False  # Set success to False when the bot encounters aliens
+                        break
+                    #print(f"Step {steps}: Bot at {bot_position}, Captain at {captain_position}")
+                    if captain_position == bot_position:
+                        #print(f"Mission Successful : Captain Saved on step {steps}")
+                        success = True  # Set success to True when the bot reaches the captain
+                        success_count += 1
+                        print("Successful mission", success_count)
+                        break
+                    #visualize_layout(ship_layout,path, bot_position, captain_position, aliens)
+                    # else:
+                    #     #print("Mission Failed(3) : No Path Found")
+                    #     success = False  # Set success to False if the bot doesn't reach the captain within the specified steps
+            else:
+                #print("Mission Failed(3) : No Path Found")
+                success = False  # Set success to False if there's no path from bot to captain
+
+            survival = (alive and steps_taken == 1000) / (num_trials - success_count) if num_trials - success_count != 0 else 1.0
+            # Calculate survival rate as (bot didn't die and crossed 1000 steps) / (total trials - successful runs)
+
+
+            # if path:
+            #     for step_pos in path[1:]:
+            #         if tuple(step_pos) in aliens:
+            #             success = False
+            #             break
+            #         aliens = move_aliens(aliens, ship_layout)
+            #     else:
+            #         if tuple(path[-1]) == tuple(captain_position):
+            #             success = True
 
             results.append({
-                'K': K,
-                'Success': success,
-                'Steps': steps_taken
+                'K_bot1': K,
+                'Success_bot1': success,
+                'Steps_bot1': steps_taken,
+                'Survival_bot1': survival
             })
+    # Print statement after each simulation
+    print(f"Simulation for K={K} is complete")
 
     return pd.DataFrame(results)
 
@@ -49,10 +97,14 @@ def heuristic(a, b):
 
 def random_position(D, grid):
     """Generate a random position within the grid bounds that is not blocked."""
-    while True:
-        x, y = random.randint(0, D-1), random.randint(0, D-1)
-        if grid[x, y] == 1:  # 1 indicates an open cell
-            return (x, y)
+    possible_indices = []
+    for y in range(D):
+        for x in range(D):
+            if grid[x, y] == 1:
+                possible_indices.append((x,y))
+    if not possible_indices:
+        print("No indices available. Lower K")
+    return random.choice(possible_indices)
     #return random.randint(0, D-1), random.randint(0, D-1)
 
 def get_neighbors(position, grid):
@@ -125,11 +177,11 @@ def bot1_move(bot_position, captain_position, ship_layout):
     return next_step
 
 # Add this function to bot1.py if not importing from ship_layout.py
-def visualize_layout(layout, bot_position=None, captain_position=None, alien_positions=[]):
+def visualize_layout(layout, path, bot_position=None, captain_position=None, alien_positions=[]):
     fig, ax = plt.subplots()
     ax.imshow(layout, cmap='binary', interpolation='nearest')
 
-    # Highlighting the path
+    # Highlighting the pathy 
     for p in path:
         ax.plot(p[1], p[0], 'yx')
 
@@ -152,6 +204,11 @@ def place_aliens(D, grid, count, exclude_positions):
             grid[position] = 2  # Assuming '2' marks an alien, adjust as needed
     return aliens
 
+def remove_aliens(D, grid):
+    for x in range(D):
+        for y in range(D):
+            grid[x, y] = 1 if grid[x,y] != 0 else 0
+
 def move_aliens(alien_positions, grid):
     new_alien_positions = []
     directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]  # Possible directions: right, down, left, up
@@ -170,59 +227,40 @@ if __name__ == "__main__":
     #D = random.randint(1, 30)
     ship_layout = generate_ship_layout(D)
     print(ship_layout.shape)
-    print(ship_layout)
-    bot_position = random_position(D, ship_layout)
-    captain_position = random_position(D, ship_layout)
+    #print(ship_layout)
+    # bot_position = random_position(D, ship_layout)
+    # captain_position = random_position(D, ship_layout)
 
-    alien_count = random.randint(1, D//2)
-    K_range = range(1, (D//2)^2)
-    num_trials = 500
-    data = simulate_bot1(D, K_range, num_trials)
+    # alien_count = random.randint(1, D//2)
+    K_range = range(0, 101, 2)
+    num_trials = 250
 
-    exclude_positions = [bot_position]
-    aliens = place_aliens(D, ship_layout, alien_count, exclude_positions)
+    bot1_data = {'K_bot1': [], 'Success_bot1': [], 'Steps_bot1': [],'Survival_bot1': []}
+    
 
-    while captain_position == bot_position:  # Ensure bot and captain are not in the same position
-        captain_position = random_position(D, ship_layout)
+    # Pass pre-generated ship layout, bot position, and captain position to the simulation method
+    bot1_df = simulate_bot1(D, K_range, num_trials, ship_layout)
+     # Print or visualize results as needed
+    print(bot1_df.head())  # Example: Print the first few rows of the data
+    #print(bot1_df.describe())  # Example: Print summary statistics of the data
 
-    path = find_shortest_path(bot_position, captain_position, ship_layout)
-    print(path)
+    # Save data to CSV for later use
+    bot1_df.to_csv('bot1_data.csv', index=False)
 
-    if path and len(path) > 1:
-        for steps in range(1000):
-            if steps == len(path):
-                break
-            bot_position = path[steps]
-            if bot_position in aliens:
-                print(f"Mission Failed(1) : Captured by Aliens at {bot_position} on step {steps}")
-                break
-            aliens = move_aliens(aliens,ship_layout)
-            if bot_position in aliens:
-                print(f"Mission Failed(2) : Captured by Aliens at {bot_position} on step {steps}")
-                break
-            print(f"Step {steps}: Bot at {bot_position}, Captain at {captain_position}")
-            if captain_position == bot_position:
-                print(f"Mission Successful : Captain Saved on step {steps}")
-                break
-            visualize_layout(ship_layout, bot_position, captain_position, aliens)
-            # Use this visualization - mast hai
-        else:
-            print("Mission Failed(3) : No Path Found")
-
-    #ship_layout = np.ones((10, 10), dtype=int)  # Example: Open grid
-    #ship_layout[5, :] = 0  # Example: Adding a row of blocked cells for complexity
     # Visualizing the data
     plt.figure(figsize=(10, 6))
-    sns.lineplot(data=data, x='K', y='Success', estimator=np.mean)
+    #sns.lineplot(data=bot1_df, x='K', y='Success', estimator=np.mean)
+    sns.lineplot(data=bot1_df, x='K_bot1', y='Success_bot1')
     plt.title('Bot 1 Success Rate vs Number of Aliens')
     plt.xlabel('Number of Aliens (K)')
     plt.ylabel('Success Rate')
     plt.show()
 
     plt.figure(figsize=(10, 6))
-    sns.lineplot(data=data, x='K', y='Steps', estimator=np.mean)
-    plt.title('Bot 1 Average Steps vs Number of Aliens')
+    #sns.lineplot(data=bot1_df, x='K', y='Steps', estimator=np.mean)
+    sns.lineplot(data=bot1_df, x='K_bot1', y='Survival_bot1')
+    plt.title('Bot 1 Survival Rate vs Number of Aliens')
     plt.xlabel('Number of Aliens (K)')
-    plt.ylabel('Average Steps to Reach the Captain')
+    plt.ylabel('Survival Rate')
     plt.show()
     # visualize_layout(ship_layout, bot_position, captain_position, aliens)

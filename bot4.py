@@ -52,6 +52,9 @@ def simulate_bot4(D, K_range, num_trials, ship_layout):
                         success_count += 1
                         print("Successful Mission", success_count)
                         break
+                     # Update the visualization at each step
+                    # if steps % 3 == 0:  # For example, update the visualization every 10 steps
+                    #     visualize_layout_with_risks(ship_layout, risk_scores, bot_position, captain_position, aliens_positions, path)
             else:
                 success = False
                 # visualize_layout_with_risks(ship_layout, risk_scores, bot_position, captain_position, aliens_positions, path)
@@ -66,56 +69,10 @@ def simulate_bot4(D, K_range, num_trials, ship_layout):
                 'Survival_bot4': survival
             })
     # Print statement after each simulation
+    visualize_layout_with_risks(ship_layout, risk_scores, bot_position, captain_position, aliens_positions, path)
     print(f"Simulation for K={K} is complete")
 
     return pd.DataFrame(results)
-
-
-# def simulate_bot4(D, K_range, num_trials, ship_layout):
-#     results = []
-
-#     for K in K_range:
-#         print(f"Simulation for {K} Aliens")
-#         success_count = 0
-#         steps_list = []
-        
-#         for trial in range(num_trials):
-#             print(f"Trial: ({K}, {trial})")
-#             bot_position = random_position(D, ship_layout)
-#             captain_position = random_position(D, ship_layout)
-#             exclude_positions = [bot_position]
-#             remove_aliens(D, ship_layout)
-#             aliens_positions = place_aliens(D, ship_layout, K, exclude_positions)
-            
-#             risk_scores = calculate_risk_scores(ship_layout, aliens_positions)
-#             next_move, path, _ = bot4_move(bot_position, captain_position, ship_layout, aliens_positions)
-#             #bot_position, captain_position, ship_layout, aliens_positions 
-#             steps = 0
-#             success = False
-            
-            # while steps < 1000:
-            #     steps += 1
-            #     bot_position = next_move
-            #     if bot_position == captain_position:
-            #         success = True
-            #         break
-            #     aliens_positions = move_aliens(aliens_positions, ship_layout)
-            #     risk_scores = calculate_risk_scores(ship_layout, aliens_positions)
-            #     next_move, path, _ = bot4_move(bot_position, captain_position, ship_layout, aliens_positions)
-                
-            #     if bot_position in aliens_positions:
-            #         success = False
-            #         break
-                
-            #     visualize_layout_with_risks(ship_layout, risk_scores, bot_position, captain_position, aliens_positions, path)
-            # success_count += 1 if success else 0
-            # steps_list.append(steps)
-            
-    #     success_rate = success_count / num_trials
-    #     avg_steps = np.mean(steps_list)
-    #     results.append({'K': K, 'SuccessRate': success_rate, 'AverageSteps': avg_steps})
-    
-    # return pd.DataFrame(results)
 
 def heuristic(a, b):
     """Calculate the Manhattan distance between two points."""
@@ -291,58 +248,6 @@ if __name__ == "__main__":
     plt.ylabel('Survival Rate')
     plt.show()
 
-    # D = random.randint(1, 50)  # Dynamic ship size
-    # ship_layout = generate_ship_layout(D)
-    # print(ship_layout.shape)
-    # print(ship_layout)
-    # bot_position = random_position(D, ship_layout)
-    # captain_position = random_position(D, ship_layout)
-
-    # alien_count = random.randint(1, D//2)
-    # exclude_positions = [bot_position]
-    # #, captain_position]
-    # alien_positions = place_aliens(D, ship_layout, alien_count, exclude_positions)  # Reuse or define this function
-    # #print(alien_positions)
-    # while captain_position == bot_position:
-    #     captain_position = random_position(D, ship_layout)
-    
-    # # Correctly calculate risk scores before finding the path
-    # risk_scores = calculate_risk_scores(ship_layout, alien_positions)
-    # next_move, path, risk_scores = bot4_move(bot_position, captain_position, ship_layout, alien_positions)
-    # bot_position = next_move
-    # print("Path:", path)
-
-    # steps = 0
-    # max_steps = 1000 # To Prevent Infinite Loop
-    # while bot_position != captain_position and steps < max_steps:
-    #     steps += 1
-    #     alien_positions = move_aliens(alien_positions, ship_layout)  # Move aliens
-    #     previous_position = bot_position  
-              
-    #     # Recalculate risk scores based on updated alien positions
-    #     # risk_scores = calculate_risk_scores(ship_layout, alien_positions)
-    #     # Find the new path with updated risk scores and alien positions
-    #     next_move, path, risk_scores = bot4_move(bot_position, captain_position, ship_layout, alien_positions)
-    #     path = next_move
-    #     bot_position = next_move 
-    #     # if next_move else bot_position  # Update bot position only if next_move is valid
-
-    #     if bot_position in alien_positions:
-    #         print(f"Mission Failed(1) : Captured by Aliens at {bot_position} on step {steps}")
-    #         break
-    #     alien_positions = move_aliens(alien_positions,ship_layout)
-    #     if bot_position in alien_positions:
-    #         print(f"Mission Failed(1) : Captured by Aliens at {bot_position} on step {steps}")
-    #         break
-    #     if bot_position == previous_position:
-    #         print(f"Step {steps}: Bot is stuck at {bot_position}, trying to reach Captain at {captain_position}.")
-    #     else:
-    #         print(f"Step {steps}: Bot moved to {bot_position}, aiming for Captain at {captain_position}.")
-
-    #     if bot_position == captain_position:
-    #         print("Bot has successfully reached the captain!")
-    #         break
-
-    #     # Update the visualization at each step
-    #     if steps % 3 == 0:  # For example, update the visualization every 10 steps
-    #         visualize_layout_with_risks(ship_layout, risk_scores, bot_position, captain_position, alien_positions, path)
+    # # Update the visualization at each step
+    # if steps % 3 == 0:  # For example, update the visualization every 10 steps
+    #     visualize_layout_with_risks(ship_layout, risk_scores, bot_position, captain_position, alien_positions, path)
